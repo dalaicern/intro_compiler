@@ -5,7 +5,11 @@ A_stm prog(void) {
 
 return 
 A_CompoundStm(
-    A_AssignStm("a", A_OpExp(A_NumExp(5), A_plus, A_NumExp(3))), 
+    A_AssignStm("a", A_OpExp(A_NumExp(5), A_plus, A_NumExp(3))),
+    // A_AssignStm("a", A_OpExp(A_NumExp(5), A_plus, A_NumExp(3))) 
+ 
+    // A_PrintStm(A_LastExpList(A_IdExp("b")))
+
     A_CompoundStm(
         A_AssignStm(
             "b",

@@ -62,7 +62,13 @@ int operate(Table_ t, A_exp exp){
             || (exp -> u.op.left->kind == A_numExp && exp -> u.op.right->kind == A_numExp)){
         int val1 = exp -> u.op.left->kind == A_numExp ? exp -> u.op.left->u.num : lookup(t, exp -> u.op.left->u.id);
         int val2 = exp -> u.op.right->kind == A_numExp ? exp -> u.op.right->u.num : lookup(t, exp -> u.op.right->u.id);
-        printf("operation done. %d %d\n", val1, val2);
+        
+        // if(exp -> u.op.left->kind == A_idExp) 
+        //     printf("id1: %s  ", exp -> u.op.left->u.id);
+        // if(exp -> u.op.right->kind == A_idExp) 
+        //     printf("id2: %s   ", exp -> u.op.right->u.id);
+
+        // printf("operation done. %d %d\n", val1, val2);
 
         switch (exp -> u.op.oper) {
             case A_plus:
@@ -82,7 +88,7 @@ int operate(Table_ t, A_exp exp){
 
 int lookup(Table_ t, string key){
     while(t){
-        if(strcmp(t->id , key) != 0){
+        if(strcmp(t->id , key) == 0){
             return t -> value;
         }
         t = t -> tail;
@@ -90,22 +96,35 @@ int lookup(Table_ t, string key){
     return -1;
 }
 
+void printTable(Table_ t){
+    while(t){
+        printf("%s %d | ", t -> id, t->value);
+        t = t->tail;
+    }
+}
+
 
 Table_ interpStm(A_stm stm, Table_ t){
     if(!stm) return t;
     
-    if(stm -> kind == A_assignStm && stm -> u.assign.exp -> kind == A_eseqExp){
+    if(stm -> kind == A_assignStm){
+        // printf("1");
         IntAndTable assignee = interpExp(stm -> u.assign.exp, t);
         t = Table(stm -> u.assign.id, assignee.i, assignee.t);
+        // printTable(t);
+
         return t;
     } else if(stm -> kind == A_compoundStm){
-        interpStm(stm -> u.compound.stm1, t);
-        interpStm(stm -> u.compound.stm2, t);
+        // printf("2");
+        t = interpStm(stm -> u.compound.stm1, t);
+        t = interpStm(stm -> u.compound.stm2, t);
     } else if(stm -> kind == A_printStm) {
+        // printf("3");
         A_expList explist = stm -> u.print.exps;
         while (explist) {
             IntAndTable exp_result = interpExp(explist->u.pair.head, t);
             t = exp_result.t;
+            printf("%d ", exp_result.i);
             if (explist->kind == A_lastExpList) 
                 break;
             explist = explist->u.pair.tail;
@@ -115,7 +134,10 @@ Table_ interpStm(A_stm stm, Table_ t){
 }
 
 IntAndTable interpExp(A_exp exp, Table_ t){
+    // printTable(t);
+    // printf("\n");
     int res;
+
     switch(exp -> kind){
         case A_numExp:
             res = exp -> u.num;
@@ -128,6 +150,9 @@ IntAndTable interpExp(A_exp exp, Table_ t){
             break;
         case A_eseqExp:
             t = interpStm(exp -> u.eseq.stm, t);
+            IntAndTable exp_result = interpExp(exp -> u.eseq.exp, t);
+            res = exp_result.i;
+            t = exp_result.t;
             break;
     }
     IntAndTable a = {res, t};

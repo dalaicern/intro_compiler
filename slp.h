@@ -26,9 +26,9 @@ A_exp A_OpExp(A_exp left, A_binop oper, A_exp right);
 A_exp A_EseqExp(A_stm stm, A_exp exp);
 
 struct A_expList_ {enum {A_pairExpList, A_lastExpList} kind;
-                   union {struct {A_exp head; A_expList tail;} pair;
+                     union {struct {A_exp head; A_expList tail;} pair;
                           A_exp last;
-                         } u;
+                     } u;
                   };
 
 A_expList A_PairExpList(A_exp head, A_expList tail);
