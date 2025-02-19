@@ -11,21 +11,18 @@ typedef struct table *Table_;
 struct table {string id; int value; Table_ tail;};
 typedef struct  {int i; Table_ t;} IntAndTable;
 
+Table_ interpStm(A_stm, Table_);
+IntAndTable interpExp(A_exp, Table_);
+int operate(Table_, A_exp);
+int lookup(Table_, string);
+
 Table_ Table(string id, int value, struct table *tail) {
-    Table_ t = malloc(sizeof(*t)); 
+    Table_ t = checked_malloc(sizeof(*t)); 
     t->id=id; 
     t->value=value; 
     t->tail=tail; 
     return t;
 }
-
-// Table_ interpStm(A_stm s, Table_ t){
-
-// }
-
-// IntAndTable interpExp(A_exp e, Table_ t){
-
-// }
 
 int counter(A_expList explist) {
     int count = 0;
@@ -59,8 +56,28 @@ Table_ update(Table_ t, string key, int val){
     return Table(key, val, t);
 }
 
-void printer(A_expList expList){
+int operate(Table_ t, A_exp exp){
+    if((exp -> u.op.left->kind == A_numExp && exp -> u.op.right->kind == A_idExp)
+            || (exp -> u.op.left->kind == A_idExp && exp -> u.op.right->kind == A_numExp)
+            || (exp -> u.op.left->kind == A_numExp && exp -> u.op.right->kind == A_numExp)){
+        int val1 = exp -> u.op.left->kind == A_numExp ? exp -> u.op.left->u.num : lookup(t, exp -> u.op.left->u.id);
+        int val2 = exp -> u.op.right->kind == A_numExp ? exp -> u.op.right->u.num : lookup(t, exp -> u.op.right->u.id);
+        printf("operation done. %d %d\n", val1, val2);
 
+        switch (exp -> u.op.oper) {
+            case A_plus:
+                return val1 + val2;
+            case A_minus:
+                return val1 - val2;
+            case A_times:
+                return val1 * val2;
+            default:
+                return val1 / val2;
+        }
+    }
+
+    printf("Syntax error");
+    return -1;
 }
 
 int lookup(Table_ t, string key){
@@ -73,22 +90,58 @@ int lookup(Table_ t, string key){
     return -1;
 }
 
-void interp(A_stm stm){
-    if(!stm) return;
+
+Table_ interpStm(A_stm stm, Table_ t){
+    if(!stm) return t;
     
     if(stm -> kind == A_assignStm && stm -> u.assign.exp -> kind == A_eseqExp){
-        return interp(stm -> u.assign.exp -> u.eseq.stm);
+        IntAndTable assignee = interpExp(stm -> u.assign.exp, t);
+        t = Table(stm -> u.assign.id, assignee.i, assignee.t);
+        return t;
     } else if(stm -> kind == A_compoundStm){
-        interp(stm -> u.compound.stm1);
-        interp(stm -> u.compound.stm2);
+        interpStm(stm -> u.compound.stm1, t);
+        interpStm(stm -> u.compound.stm2, t);
     } else if(stm -> kind == A_printStm) {
-        return printer(stm -> u.print.exps);
+        A_expList explist = stm -> u.print.exps;
+        while (explist) {
+            IntAndTable exp_result = interpExp(explist->u.pair.head, t);
+            t = exp_result.t;
+            if (explist->kind == A_lastExpList) 
+                break;
+            explist = explist->u.pair.tail;
+        }
     }
-    
+    return t;
+}
+
+IntAndTable interpExp(A_exp exp, Table_ t){
+    int res;
+    switch(exp -> kind){
+        case A_numExp:
+            res = exp -> u.num;
+            break;
+        case A_idExp:
+            res = lookup(t, exp -> u.id);
+            break;
+        case A_opExp:
+            res = operate(t, exp);
+            break;
+        case A_eseqExp:
+            t = interpStm(exp -> u.eseq.stm, t);
+            break;
+    }
+    IntAndTable a = {res, t};
+    return a;
+}
+
+void interp(A_stm stm){
+    Table_ t = NULL;
+    interpStm(stm, t);
 }
 
 int main() {
-    printf("%d", maxargs(prog()));
+    // printf("max args: %d\n", maxargs(prog()));
+    interp(prog());
 
     return 0;
 }
