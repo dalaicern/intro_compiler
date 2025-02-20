@@ -110,7 +110,10 @@ void printTable(Table_ t){
 
 
 Table_ interpStm(A_stm stm, Table_ t){
-    if(!stm) return t;
+    if(!stm) {
+        fprintf(stderr, "Error: Null statement encountered.\n");
+        return t;
+    }
     
     if(stm -> kind == A_assignStm){
         // printf("1");
@@ -134,6 +137,8 @@ Table_ interpStm(A_stm stm, Table_ t){
                 break;
             explist = explist->u.pair.tail;
         }
+    } else {
+        fprintf(stderr, "Error: Unknown statement kind encountered.\n");
     }
     return t;
 }
@@ -143,21 +148,37 @@ IntAndTable interpExp(A_exp exp, Table_ t){
     // printf("\n");
     int res;
 
+    if (!exp) {
+        fprintf(stderr, "Error: Null expression encountered.\n");
+        IntAndTable a = {-1, t};
+        return a;
+    }
+
     switch(exp -> kind){
         case A_numExp:
             res = exp -> u.num;
             break;
         case A_idExp:
             res = lookup(t, exp -> u.id);
+            if (res == -1) {
+                fprintf(stderr, "Error: Undefined identifier '%s'.\n", exp -> u.id);
+            }
             break;
         case A_opExp:
             res = operate(t, exp);
+            if (res == -1) {
+                fprintf(stderr, "Error: Operation failed.\n");
+            }
             break;
         case A_eseqExp:
             t = interpStm(exp -> u.eseq.stm, t);
             IntAndTable exp_result = interpExp(exp -> u.eseq.exp, t);
             res = exp_result.i;
             t = exp_result.t;
+            break;
+        default:
+            fprintf(stderr, "Error: Unknown expression kind encountered.\n");
+            res = -1;
             break;
     }
     IntAndTable a = {res, t};
