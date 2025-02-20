@@ -1,4 +1,3 @@
-#include "util.h"
 #include "prog1.h"
 //
 A_stm prog(void) {
@@ -18,10 +17,10 @@ A_CompoundStm(
                     A_PairExpList(
                         A_IdExp("a"),
                         A_LastExpList(A_OpExp(A_IdExp("a"), A_minus, A_NumExp(1)))
-                        )
-                    ), 
-                    A_OpExp(A_NumExp(10), A_times, A_IdExp("a")
-                )
+                    )
+                ),
+                A_OpExp(A_NumExp(10), A_times, A_IdExp("a"))
+                // A_OpExp(A_NumExp(10), A_div, A_NumExp(0))
             )
         ),
         A_PrintStm(A_LastExpList(A_IdExp("b")))

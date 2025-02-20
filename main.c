@@ -1,6 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include "util.h"
 #include "prog1.h"
 
 #define max(a, b) a > b ? a : b
@@ -78,8 +78,13 @@ int operate(Table_ t, A_exp exp){
             case A_times:
                 return val1 * val2;
             default:
-                return val1 / val2;
+                if(!val2) {
+                    printf("ERROR: cannot divide by 0 !!!!!");
+                    exit(1);
+                }
+                else return val1 / val2;
         }
+
     }
 
     printf("Syntax error");
